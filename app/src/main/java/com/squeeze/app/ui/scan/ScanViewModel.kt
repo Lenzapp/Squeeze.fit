@@ -56,10 +56,10 @@ import javax.inject.Inject
  * from the front photograph alone, or add a side view for measured depth and a back view
  * for a second width reading.
  */
-enum class ScanStep { FRONT, OPTIONAL_EXTRAS, SIDE, BACK, ANALYSING, RESULT }
+enum class ScanStep { WEIGHT, FRONT, OPTIONAL_EXTRAS, SIDE, BACK, ANALYSING, RESULT }
 
 data class ScanUiState(
-    val step: ScanStep = ScanStep.FRONT,
+    val step: ScanStep = ScanStep.WEIGHT,
     val result: ScanResult? = null,
     val failure: DetectionFailure? = null,
     val saved: Boolean = false,
@@ -229,13 +229,17 @@ class ScanViewModel @Inject constructor(
     }
 
     /**
-     * Records the weight for this scan, if the user supplies one on the result screen.
+     * Records the weight and opens the camera.
      *
-     * The measurement itself never depends on it: a front photograph resolves every
-     * circumference on its own, and weight is only carried alongside for the records.
+     * Null is allowed and moves on: a scan without a weight is worse but still worth
+     * taking, and a modal the user cannot get past would cost more scans than it
+     * saves figures. The measurement itself resolves from the front photograph; the
+     * weight is carried alongside for the record.
      */
-    fun setWeight(weightKg: Double?) {
+    fun confirmWeight(weightKg: Double?) {
+        if (_state.value.step != ScanStep.WEIGHT) return
         _state.value = _state.value.copy(
+            step = ScanStep.FRONT,
             enteredWeightKg = weightKg ?: _state.value.knownWeightKg,
         )
     }

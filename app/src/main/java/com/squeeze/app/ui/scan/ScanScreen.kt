@@ -132,6 +132,11 @@ fun ScanScreen(
     LaunchedEffect(state.saved) { if (state.saved) onFinished() }
 
     when (state.step) {
+        ScanStep.WEIGHT -> WeightStep(
+            knownWeightKg = state.knownWeightKg,
+            onConfirm = viewModel::confirmWeight,
+        )
+
         ScanStep.OPTIONAL_EXTRAS -> OptionalExtrasStep(
             hasSide = state.hasSide,
             hasBack = state.hasBack,
@@ -852,6 +857,67 @@ private fun ResultStep(
                         .takeIf { _ -> state.framing == ScanFraming.UPPER_BODY },
 
                 ),
+            )
+        }
+
+        // ----------------------------------------------------------------
+        // Photo-resolved measurements: the actual circumferences the
+        // front photograph produced, displayed for transparency.
+        // ----------------------------------------------------------------
+        val hasAny = listOfNotNull(
+            c.neckCm, c.waistCm, c.hipCm, c.chestCm,
+            c.thighCm, c.armCm, c.calfCm,
+        ).isNotEmpty()
+
+        if (hasAny) {
+            Text(
+                "Measurements from photo",
+                style = MaterialTheme.typography.titleMedium,
+            )
+
+            val items = listOf(
+                "Neck" to c.neckCm,
+                "Waist" to c.waistCm,
+                "Hip" to c.hipCm,
+                "Chest" to c.chestCm,
+                "Thigh" to c.thighCm,
+                "Arm" to c.armCm,
+                "Calf" to c.calfCm,
+            ).filter { it.second != null }
+
+            items.chunked(2).forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    row.forEach { (label, value) ->
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            ),
+                        ) {
+                            Column(Modifier.padding(12.dp)) {
+                                Text(
+                                    label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    "%.1f cm".format(value),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            InfoCard(
+                "Circumferences are measured from your front silhouette. Each is " +
+                    "scaled by your stated height and estimated from the outline's " +
+                    "own proportions — no tape or side photograph required.",
             )
         }
 
