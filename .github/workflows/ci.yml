@@ -1,0 +1,172 @@
+name: CI
+
+# Builds and tests on every push and pull request, and publishes an installable debug APK
+# as a build artifact.
+#
+# This is the workflow that produces a usable APK without any credentials: debug builds are
+# signed with the auto-generated debug keystore, so the artifact installs on a device
+# directly. release.yml handles signed, Play-ready output and needs secrets.
+# Push is limited to main so branch pushes are covered once, by pull_request. Listening to
+# both on every branch runs the whole matrix twice for each PR commit.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "17"
+
+jobs:
+  test:
+    name: Core tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Gradle evaluates every project in the build before running any task, so even a
+      # :core-only task needs the SDK present for :app to configure.
+      - name: Install Android SDK components
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" > /dev/null
+
+      - name: Run core tests
+        run: ./gradlew :core:jvmTest --no-daemon --stacktrace
+
+      # The measurement lab runs this module's own code in a browser rather than a port of
+      # it, so the JS target has to keep compiling. Nothing here has a java.* import today
+      # and this is what stops one arriving unnoticed — a JVM-only call would break the lab
+      # silently and only be found the next time someone tried to open it.
+      - name: Check the shared code still leaves the JVM
+        run: ./gradlew :core:compileKotlinJs --no-daemon --stacktrace
+
+      # The lab's export surface, built the way the lab consumes it. compileKotlinJs alone
+      # does not catch an @JsExport on a type JavaScript cannot represent — a List, a
+      # nullable Double, a data class — because that is rejected when the binary is linked,
+      # not when the module is compiled.
+      - name: Build the measurement lab bundle
+        run: ./gradlew :core:jsBrowserDistribution --no-daemon --stacktrace
+
+      - name: Upload the lab bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: measurement-lab-bundle
+          path: core/build/dist/js/productionExecutable/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-test-report
+          path: core/build/reports/tests/jvmTest/
+          retention-days: 14
+
+  debug-apk:
+    name: Debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android SDK components
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-35" "build-tools;35.0.0" > /dev/null
+
+      # Every build is stamped with the run number and commit, and Settings displays it.
+      # Debug builds otherwise all claim to be the same version, which makes "is the new
+      # build actually installed?" unanswerable — a question that has already cost a
+      # debugging round on this project.
+      - name: Stamp version
+        run: |
+          echo "VERSION_NAME=0.3.0-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_ENV"
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: |
+          set -euo pipefail
+          APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
+          if [ -z "$APK" ]; then
+            echo "::error::assembleDebug produced no APK"
+            exit 1
+          fi
+          mkdir -p dist
+          cp "$APK" "dist/squeeze-debug-${GITHUB_SHA::7}.apk"
+          ls -la dist
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: squeeze-debug-apk
+          path: dist/
+          retention-days: 30
+          if-no-files-found: error
+
+      # Lint and merged-manifest reports are where manifest, resource and policy problems
+      # surface. Kept only on failure, since that is the only time they are worth reading.
+      - name: Upload build reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build-reports
+          path: |
+            app/build/reports/
+            app/build/outputs/logs/
+            app/build/intermediates/merged_manifests/
+          retention-days: 14
+
+  web:
+    name: Website
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Type check, lint and route tests. The site has no build step, so this is the only
+      # thing standing between a typo and a broken deployment.
+      - name: Check
+        working-directory: web
+        run: deno check main.ts
+
+      - name: Lint
+        working-directory: web
+        run: deno lint
+
+      - name: Test
+        working-directory: web
+        run: deno test --allow-read

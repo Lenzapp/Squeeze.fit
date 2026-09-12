@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      There is deliberately no INTERNET permission.
+
+      This is the app's strongest guarantee, and it is the reason to read the permission
+      list rather than the marketing: without this permission the operating system will not
+      let the process open a socket, so no photograph and no measurement can leave the
+      device even if a bug, a dependency, or a future contributor tried to send one. The
+      claim is enforced rather than promised, and any user can check it.
+
+      Everything the app does is compatible with that:
+        - Body scanning runs on models packaged in the APK; inference is local.
+        - Health Connect is an on-device datastore.
+        - Play Billing communicates with the Play Store app over binder IPC, not through
+          this process's network stack, so purchases still work.
+
+      Adding INTERNET later would silently void the guarantee. Anything that seems to need
+      it should be treated as a design question first.
+    -->
+
+    <!-- Photo capture for body scanning. Optional so the app still installs on devices
+         without a camera, where uploading photos and tape entry both remain available. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!-- Play Billing merges com.android.vending.BILLING in from the library manifest. -->
+
+    <application
+        android:name=".SqueezeApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Squeeze"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Squeeze"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
