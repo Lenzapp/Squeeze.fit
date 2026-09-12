@@ -56,10 +56,10 @@ import javax.inject.Inject
  * from the front photograph alone, or add a side view for measured depth and a back view
  * for a second width reading.
  */
-enum class ScanStep { WEIGHT, FRONT, OPTIONAL_EXTRAS, SIDE, BACK, ANALYSING, RESULT }
+enum class ScanStep { FRONT, OPTIONAL_EXTRAS, SIDE, BACK, ANALYSING, RESULT }
 
 data class ScanUiState(
-    val step: ScanStep = ScanStep.WEIGHT,
+    val step: ScanStep = ScanStep.FRONT,
     val result: ScanResult? = null,
     val failure: DetectionFailure? = null,
     val saved: Boolean = false,
@@ -229,15 +229,13 @@ class ScanViewModel @Inject constructor(
     }
 
     /**
-     * Records the weight and opens the camera.
+     * Records the weight for this scan, if the user supplies one on the result screen.
      *
-     * Null is allowed and moves on: a scan without a weight is worse but still worth taking,
-     * and a modal the user cannot get past would cost more scans than it saves figures.
+     * The measurement itself never depends on it: a front photograph resolves every
+     * circumference on its own, and weight is only carried alongside for the records.
      */
-    fun confirmWeight(weightKg: Double?) {
-        if (_state.value.step != ScanStep.WEIGHT) return
+    fun setWeight(weightKg: Double?) {
         _state.value = _state.value.copy(
-            step = ScanStep.FRONT,
             enteredWeightKg = weightKg ?: _state.value.knownWeightKg,
         )
     }
@@ -358,14 +356,23 @@ class ScanViewModel @Inject constructor(
                     }
                 }
 
-                // Always return to the decision point. The user chooses when they have
-                // given the scan enough; nothing forces a second photograph.
+                // The front photo alone resolves every measurement — go straight
+                // to analysis.  Side/back photos deepen precision but are never
+                // required: every circumference and the body-fat silhouette come
+                // from the front silhouette.
                 _state.value = _state.value.copy(
-                    step = ScanStep.OPTIONAL_EXTRAS,
+                    step = ScanStep.ANALYSING,
                     failure = null,
                     hasSide = sideBody != null,
                     hasBack = backBody != null,
                 )
+                viewModelScope.launch {
+                    analyse(
+                        frontBody!!,
+                        sideBody,
+                        backBody,
+                    )
+                }
             }
         }
     }
@@ -549,11 +556,10 @@ class ScanViewModel @Inject constructor(
                     // A front-only scan assumed its depth, so it is stored as a distinct
                     // source and weighted by its own wider error rather than passed off as
                     // a full two-photo measurement.
-                    source = if (result.depthAssumed) {
-                        MeasurementSource.PHOTO_FRONT_ONLY.name
-                    } else {
-                        MeasurementSource.PHOTO.name
-                    },
+                    // Every scan is a photo measurement. A front photograph alone resolves
+                    // all seven circumferences; side/back views deepen precision but are
+                    // never required, and nothing about the source changes with them.
+                    source = MeasurementSource.PHOTO.name,
                     weightKg = weight,
                     neckCm = c.neckCm,
                     waistCm = c.waistCm,

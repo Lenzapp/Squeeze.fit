@@ -320,7 +320,7 @@ private fun DetailGroup(
 
 private fun sourceLabel(source: String): String = when (source) {
     "PHOTO" -> "Photo scan"
-    "PHOTO_FRONT_ONLY" -> "Photo scan, front only"
+    "PHOTO_FRONT_ONLY" -> "Photo scan"
     "REFERENCE_SCAN" -> "Reference scan"
     "BIA_SCALE" -> "Bioimpedance scale"
     else -> "Tape measurement"

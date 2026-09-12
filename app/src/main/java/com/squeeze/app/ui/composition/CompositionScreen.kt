@@ -490,7 +490,7 @@ private fun lastEntryLabel(measurements: List<MeasurementEntity>): String =
 /** How this row was measured. Shown as a chip, because it qualifies everything beside it. */
 private fun sourceLabel(entry: MeasurementEntity): String = when (entry.source) {
     "PHOTO" -> "Scan"
-    "PHOTO_FRONT_ONLY" -> "Front only"
+    "PHOTO_FRONT_ONLY" -> "Photo scan"
     "REFERENCE_SCAN" -> "Reference"
     else -> "Tape"
 }

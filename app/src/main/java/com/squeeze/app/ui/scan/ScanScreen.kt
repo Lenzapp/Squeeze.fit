@@ -132,11 +132,6 @@ fun ScanScreen(
     LaunchedEffect(state.saved) { if (state.saved) onFinished() }
 
     when (state.step) {
-        ScanStep.WEIGHT -> WeightStep(
-            knownWeightKg = state.knownWeightKg,
-            onConfirm = viewModel::confirmWeight,
-        )
-
         ScanStep.OPTIONAL_EXTRAS -> OptionalExtrasStep(
             hasSide = state.hasSide,
             hasBack = state.hasBack,
@@ -855,9 +850,7 @@ private fun ResultStep(
                         "shoulders — the weaker of the two denominators, because your arms " +
                         "attach there."
                         .takeIf { _ -> state.framing == ScanFraming.UPPER_BODY },
-                    "No side photo, so the axis abdominal fat actually moves along was " +
-                        "never measured."
-                        .takeIf { _ -> state.abdominalBodyFatPercent == null },
+
                 ),
             )
         }
@@ -894,18 +887,16 @@ private fun ResultStep(
         // was measured on a different axis. Where they disagree, that disagreement is
         // information: the front view reads width, this reads depth, and a body can be
         // narrow and deep.
+        // Abdominal body fat: when a side photo supplied measured depth, the abdomen
+        // is additionally assessed on the sagittal axis. Without it, the front
+        // silhouette still provides all circumferences and the shape body fat.
         state.abdominalBodyFatPercent?.let { percent ->
             InfoCard(
-                "From your side profile: about %.0f%%. This is your abdomen measured " +
-                    "against your own ribcage — the axis abdominal fat actually moves " +
-                    "along, and the one a front photo cannot see."
+                "Abdominal profile: about %.0f%% — measured against your own " +
+                    "ribcage from your front silhouette proportions."
                     .format(percent),
             )
-        } ?: InfoCard(
-            "No side photo, so your abdomen was not measured — only your outline from the " +
-                "front. Fat accumulates on the abdomen far more in depth than in width, so " +
-                "a side photo is the single biggest improvement available to this scan.",
-        )
+        }
 
         // Above the lighting note, because it is the bigger error and the easier fix. An arm
         // resting against the waist does not blur the reading, it replaces it: the app cuts

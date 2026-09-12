@@ -250,6 +250,18 @@ object AutomaticScanBuilder {
             emptyMap()
         }
 
+        // Waist-to-hip taper from the front silhouette, used to adjust depth-to-width
+        // ratios per body rather than using fixed population averages. The ratio is
+        // measured directly from the same front photograph that supplies the widths,
+        // making every axis of the circumference estimate photo-derived.
+        val frontHipWidth = frontSites[ScanSite.HIP]?.let { row ->
+            frontProfile.torsoWidthAt(row).takeIf { it > 0.0 }
+        } ?: 1.0
+        val frontWaistWidth = frontSites[ScanSite.WAIST]?.let { row ->
+            frontProfile.torsoWidthAt(row).takeIf { it > 0.0 }
+        } ?: frontHipWidth
+        val taper = if (frontHipWidth > 0.0) (frontWaistWidth / frontHipWidth) else 0.88
+
         return frontSites.mapNotNull { (site, frontRow) ->
             val useLeg = site == ScanSite.THIGH ||
                 site == ScanSite.ARM ||
@@ -271,7 +283,10 @@ object AutomaticScanBuilder {
                 ?.let { sideProfile?.widthFor(it, useLeg) }
                 ?.takeIf { it > 0.0 }
 
-            val depth = measuredDepth ?: DepthRatios.estimateDepth(site, coronalWidth)
+            // When no side photo is taken, the depth is estimated from the front
+            // silhouette's proportions (the taper). This keeps the full circumference
+            // measurement resolved from the same photograph.
+            val depth = measuredDepth ?: DepthRatios.estimateDepth(site, coronalWidth, taper)
 
             ScanMarker(
                 site = site,
