@@ -96,3 +96,8 @@ val downloadVisionModels by tasks.registering {
 // Models must exist before assets are packaged, for every variant.
 tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }
     .configureEach { dependsOn(downloadVisionModels) }
+
+// Lint's model task reads the assets directory too; declare the same dependency so Gradle's
+// task validation passes for release builds.
+tasks.matching { it.name.startsWith("generate") && it.name.endsWith("LintVitalReportModel") }
+    .configureEach { dependsOn(downloadVisionModels) }
