@@ -56,7 +56,7 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" > /dev/null
 
       - name: Run core tests
-        run: ./gradlew :core:test --no-daemon
+        run: ./gradlew :core:jvmTest --no-daemon --stacktrace
 
       - name: Upload test report
         if: failure()
