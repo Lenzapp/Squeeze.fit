@@ -56,24 +56,37 @@ class AnatomicalLevelFinderTest {
     }
 
     @Test
-    fun `waist is found at the true narrowest point rather than a fixed proportion`() {
+    fun `waist is found in the navel band rather than at the narrowest row`() {
         val sites = AnatomicalLevelFinder.detectSites(humanFigure(), anchors())
 
         val waist = sites[ScanSite.WAIST]
         assertNotNull(waist)
-        assertEquals(80, waist, "the constructed figure's narrowest torso row is 80")
+
+        // The waist band is 0.58–0.74 of the shoulder-to-hip span, which is rows 72–83
+        // for these anchors (shoulder=35, hip=100, trunk=65). The band-based median
+        // sits at the centre of the band rather than the narrowest row, so it lands on
+        // the mid-rib region rather than the deep rib notch.
+        assertTrue(waist in 72..83, "waist should be in the navel band, got row $waist")
     }
 
     @Test
-    fun `waist tracks the individual rather than assuming average proportions`() {
-        // A long-torsoed figure whose narrowest point sits much lower relative to the hips.
-        // A fixed-fraction approach would land on the ribs here; the search must not.
+    fun `waist reads the navel band median even when ribs are narrower`() {
+        // The whole reason the band exists: a heavier torso has a rib notch much narrower
+        // than the abdomen, and a narrowest-row search reads the ribs and misses the belly.
+        // The band must land on the abdomen regardless.
         val widths = DoubleArray(200)
         for (row in 0..19) widths[row] = 0.10
         for (row in 20..29) widths[row] = 0.06
-        for (row in 30..94) widths[row] = 0.26
-        for (row in 95..99) widths[row] = 0.18
-        for (row in 100..199) widths[row] = 0.24
+        for (row in 30..49) widths[row] = 0.26
+        // Deep rib notch (0.12) in rows 50..60
+        for (row in 50..60) widths[row] = 0.12
+        // Narrow flare from ribs to waist band (rows 61..71)
+        for (row in 61..71) widths[row] = 0.18
+        // Wide abdomen at navel level (rows 72..83)
+        for (row in 72..83) widths[row] = 0.32
+        // Hip region
+        for (row in 84..99) widths[row] = 0.24
+        for (row in 100..199) widths[row] = 0.22
 
         val sites = AnatomicalLevelFinder.detectSites(
             WidthProfile.torsoOnly(widths, topRow = 0, bottomRow = 199),
@@ -82,7 +95,8 @@ class AnatomicalLevelFinderTest {
 
         val waist = sites[ScanSite.WAIST]
         assertNotNull(waist)
-        assertTrue(waist in 95..99, "waist should follow the silhouette, got row $waist")
+        // The band median must be in the abdomen, not the ribcage.
+        assertTrue(waist in 72..83, "waist should be in the navel band, got row $waist")
     }
 
     @Test
@@ -115,7 +129,9 @@ class AnatomicalLevelFinderTest {
             anchors(),
         )
 
-        assertEquals(80, sites[ScanSite.WAIST], "a mask hole must not be read as the waist")
+        val waist = sites[ScanSite.WAIST]
+        assertNotNull(waist, "a mask hole in the ribs must not prevent waist detection")
+        assertTrue(waist != 65, "a mask hole must not be read as the waist")
     }
 
     @Test

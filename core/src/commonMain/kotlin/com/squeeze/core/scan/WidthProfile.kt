@@ -1,5 +1,7 @@
 package com.squeeze.core.scan
 
+import kotlin.math.abs
+
 /**
  * A body silhouette reduced to per-row widths.
  *
@@ -219,7 +221,12 @@ object AnatomicalLevelFinder {
             anchors.chinRow + (neckSpan * NECK_BAND_END).toInt(),
         )?.let { sites[ScanSite.NECK] = it }
 
-        narrowestBetween(profile, anchors.shoulderRow, anchors.hipRow)
+        // The waist is read at a fixed anatomical band centred on the navel — the region
+        // where abdominal fat sits and where anthropometric standards define the waist —
+        // rather than at the narrowest row between shoulders and hips. The narrowest row
+        // sits at the ribcage on a heavier torso and never sees the abdomen at all.
+        val trunkBands = TrunkBands.from(anchors)
+        medianRowBetween(profile, trunkBands.waist.fromRow, trunkBands.waist.toRowInclusive)
             ?.let { sites[ScanSite.WAIST] = it }
 
         // Chest sits above the waist, so it can only be searched once the waist is known.
@@ -348,6 +355,42 @@ object AnatomicalLevelFinder {
 
         if (widths.isEmpty()) return null
         return widths[widths.size / 2]
+    }
+
+    /**
+     * Row whose width is closest to the median unclipped width across [fromRow, toRow].
+     *
+     * [medianBetween] returns a width because that is all a ratio needs. The rest of the
+     * pipeline reads a site as a row — [BodyScan] looks the width up again at the returned
+     * level — so a site finder needs the same band-median idea expressed as a row. Ties are
+     * broken toward the middle of the band, so a flat region of equal widths resolves to
+     * its centre rather than its edge, which is where the anatomy of a band is.
+     */
+    fun medianRowBetween(profile: WidthProfile, fromRow: Int, toRow: Int): Int? {
+        val range = clampRange(profile, fromRow, toRow) ?: return null
+
+        val usable = range.filterNot { profile.wasClippedAt(it) }
+            .filter { profile.torsoWidthAt(it) > 0.0 }
+        if (usable.isEmpty()) return null
+
+        val median = usable.map { profile.torsoWidthAt(it) }.sorted()[usable.size / 2]
+        val bandCentre = (fromRow + toRow) / 2.0
+
+        var bestRow: Int? = null
+        var bestWidthDistance = Double.MAX_VALUE
+        var bestCentreDistance = Double.MAX_VALUE
+        for (row in usable) {
+            val widthDistance = abs(profile.torsoWidthAt(row) - median)
+            val centreDistance = abs(row - bandCentre)
+            if (widthDistance < bestWidthDistance ||
+                (widthDistance == bestWidthDistance && centreDistance < bestCentreDistance)
+            ) {
+                bestWidthDistance = widthDistance
+                bestCentreDistance = centreDistance
+                bestRow = row
+            }
+        }
+        return bestRow
     }
 
     /** Row with the largest unclipped width in [fromRow, toRow]. */

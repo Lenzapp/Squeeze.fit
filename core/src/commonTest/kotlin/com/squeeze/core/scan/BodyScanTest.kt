@@ -208,13 +208,16 @@ class BodyScanAnalyserTest {
 
 class AutomaticScanBuilderTest {
 
-    private fun figure(waistRow: Int, waistWidth: Double = 0.15): WidthProfile {
+    private fun figure(waistWidth: Double = 0.15): WidthProfile {
         val widths = DoubleArray(200)
         for (row in 0..19) widths[row] = 0.10
         for (row in 20..29) widths[row] = 0.06
-        for (row in 30..99) widths[row] = 0.26
-        widths[waistRow] = waistWidth
-        for (row in 100..119) widths[row] = 0.24
+        for (row in 30..71) widths[row] = 0.26
+        // The navel band (0.58-0.74 of the shoulder-to-hip span: rows 72-83 for these
+        // anchors) carries the waist width across the whole band, because that is where
+        // the waist is now read from.
+        for (row in 72..83) widths[row] = waistWidth
+        for (row in 84..119) widths[row] = 0.24
         widths[110] = 0.28
         for (row in 120..199) widths[row] = 0.16
         return WidthProfile.torsoOnly(widths, topRow = 0, bottomRow = 199)
@@ -225,8 +228,8 @@ class AutomaticScanBuilderTest {
     @Test
     fun `sites detected in both views become markers`() {
         val markers = AutomaticScanBuilder.build(
-            frontProfile = figure(80), frontAnchors = anchors(),
-            sideProfile = figure(80), sideAnchors = anchors(),
+            frontProfile = figure(), frontAnchors = anchors(),
+            sideProfile = figure(), sideAnchors = anchors(),
         )
 
         val sites = markers.map { it.site }.toSet()
@@ -239,9 +242,16 @@ class AutomaticScanBuilderTest {
     fun `each view is measured on its own silhouette`() {
         // The subject shifted between shots, so the waist sits at a different row in each
         // photo. Both must still be found; assuming alignment would mismeasure one.
+        // The subject shifted between shots, so the pose anchors sit at different
+        // rows in the two frames. The band-based waist follows the landmarks, so
+        // the waist is read at different rows in the two views while still
+        // recovering the same width from each silhouette.
+        val sideAnchors = PoseAnchors(
+            chinRow = 22, shoulderRow = 40, hipRow = 105, kneeRow = 165,
+        )
         val markers = AutomaticScanBuilder.build(
-            frontProfile = figure(75), frontAnchors = anchors(),
-            sideProfile = figure(85), sideAnchors = anchors(),
+            frontProfile = figure(), frontAnchors = anchors(),
+            sideProfile = figure(), sideAnchors = sideAnchors,
         )
 
         val waist = markers.firstOrNull { it.site == ScanSite.WAIST }
@@ -262,7 +272,7 @@ class AutomaticScanBuilderTest {
         val cropped = WidthProfile.torsoOnly(croppedWidths, topRow = 20, bottomRow = 90)
 
         val markers = AutomaticScanBuilder.build(
-            frontProfile = figure(80), frontAnchors = anchors(),
+            frontProfile = figure(), frontAnchors = anchors(),
             sideProfile = cropped, sideAnchors = anchors(),
         )
 
@@ -277,7 +287,7 @@ class AutomaticScanBuilderTest {
         // The side photo is optional. Without one, depth comes from DepthRatios and every
         // marker is flagged, but the user still gets a usable set of measurements.
         val markers = AutomaticScanBuilder.build(
-            frontProfile = figure(80),
+            frontProfile = figure(),
             frontAnchors = anchors(),
         )
 
@@ -290,12 +300,12 @@ class AutomaticScanBuilderTest {
     fun `a back photo is averaged with the front rather than treated as depth`() {
         // A back view measures the same axis as the front. Averaging the two halves the
         // random error; treating it as a depth would invent a measurement.
-        val wider = figure(80, waistWidth = 0.19)
+        val wider = figure(waistWidth = 0.19)
 
-        val frontOnly = AutomaticScanBuilder.build(figure(80), anchors())
+        val frontOnly = AutomaticScanBuilder.build(figure(), anchors())
             .first { it.site == ScanSite.WAIST }
         val withBack = AutomaticScanBuilder.build(
-            frontProfile = figure(80), frontAnchors = anchors(),
+            frontProfile = figure(), frontAnchors = anchors(),
             backProfile = wider, backAnchors = anchors(),
         ).first { it.site == ScanSite.WAIST }
 
@@ -309,7 +319,7 @@ class AutomaticScanBuilderTest {
         // Same anatomy, but the side photo has the subject smaller in frame. The waist is at
         // the same point on the body, so the paired heights must agree and not trip the
         // mismatch warning.
-        val front = figure(80)
+        val front = figure()
 
         val sideWidths = DoubleArray(200)
         for (row in 25..34) sideWidths[row] = 0.06
