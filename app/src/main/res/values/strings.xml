@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Squeeze.fit</string>
+
+    <string name="lock_title">Unlock Squeeze</string>
+    <string name="lock_subtitle">Your measurements are stored encrypted on this device.</string>
+    <string name="lock_cancel">Cancel</string>
+    <string name="lock_prompt">Authenticate to view your data</string>
+
+</resources>

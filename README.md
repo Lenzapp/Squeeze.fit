@@ -1,188 +1,168 @@
-<div align="center">
+# Squeeze
 
-<img src="https://walletlens.live/icon-192.png" alt="WalletLens Logo" width="88" height="88" />
+An Android body composition and training app that keeps every measurement on the device
+that took it.
 
-# WalletLens
+## What it does
 
-### The free, private, no-account portfolio tracker with AI analysis
+Tracks body composition from tape measurements, skinfolds or reference scans, separates
+real change from measurement noise, and generates training blocks that adapt to what the
+composition trend actually shows.
 
-Track **crypto, stocks, gold, real estate and cash** in one unified net-worth dashboard.  
-**Add holdings by voice, screenshot, Excel/CSV or wallet address — then export to Excel or a tax-ready CSV.**  
-Live P&L · Technical Analysis · Magic Indicator · AI Coach
+## What it claims about accuracy
 
-[![Live App](https://img.shields.io/badge/🌐%20Live%20App-walletlens.live-00c853?style=for-the-badge)](https://walletlens.live)
-[![Stars](https://img.shields.io/github/stars/tia8910/Walletlens?style=for-the-badge&color=fbbf24&label=⭐%20Stars)](https://github.com/tia8910/Walletlens/stargazers)
-[![Forks](https://img.shields.io/github/forks/tia8910/Walletlens?style=for-the-badge&color=60a5fa)](https://github.com/tia8910/Walletlens/forks)
-[![Deploy](https://img.shields.io/github/actions/workflow/status/tia8910/Walletlens/deploy.yml?style=for-the-badge&label=Deploy)](https://github.com/tia8910/Walletlens/actions/workflows/deploy.yml)
-[![License](https://img.shields.io/github/license/tia8910/Walletlens?style=for-the-badge&color=a78bfa)](LICENSE)
-[![PWA](https://img.shields.io/badge/PWA-Installable-3b82f6?style=for-the-badge)](https://walletlens.live)
+Body fat cannot be measured accurately by a phone, and this app does not pretend otherwise.
 
-> **⭐ If WalletLens helps you track your wealth, a GitHub star helps others find it — thank you!**
-
-</div>
-
----
-
-## Why WalletLens?
-
-| | WalletLens | Most trackers |
+| Method | Accuracy vs DEXA | Repeatability |
 |---|---|---|
-| Account required | ❌ None | ✅ Sign-up required |
-| Data leaves device | ❌ Never | ✅ Stored on servers |
-| Free | ✅ Forever | ⚠️ Freemium / paywalled |
-| Add holdings by | 🎙️ Voice · 📸 Screenshot · 📄 Excel/CSV · 🔗 Wallet address · ⌨️ Manual | ⌨️ Manual or exchange API only |
-| Export | ✅ Excel/CSV + tax-ready transaction CSV | ⚠️ Often paywalled |
-| Asset types | Crypto · Stocks · Metals · Real Estate · Cash | Usually crypto only |
-| AI analysis | ✅ Built-in | ❌ Paid add-on |
-| Offline support | ✅ PWA | ❌ |
-| Open source | ✅ | ❌ |
+| Tape (Navy / Hodgdon-Beckett) | ±3.5 pts | ±0.5 pts |
+| Skinfolds (Jackson-Pollock 3-site) | ±3.5 pts | ±0.8 pts |
+| Photo silhouette | ±4.0 pts | ±0.6 pts |
+| BMI estimate (fallback only) | ±4.5 pts | ±0.2 pts |
+| DEXA / BodPod (reference) | ±1.5 pts | ±1.0 pts |
 
----
+The distinction between those two columns is the entire design.
 
-## Features
+**Accuracy** is dominated by a systematic, person-specific offset — an equation fitted to a
+population sits some fixed distance from the truth for any individual. **Repeatability** is
+random scatter between two measurements of an unchanged body.
 
-### 📥 Smart Import & Export — the features no other tracker has
-> You never have to type holdings one by one. WalletLens gives you **five ways to add holdings and two ways to export** — none of which require an account, an exchange API key, or a paid plan. Manual entry is *optional*, not the default.
+Because the offset is roughly constant, it cancels out when you compare a person against
+themselves. So:
 
-- **🎙️ AI Voice Import (English & Arabic)** — say *"I bought half a Bitcoin at 65K and twenty Apple shares"* and Claude parses multiple trades from one sentence. The only free tracker with multilingual voice input. → [add-holdings-by-voice](https://walletlens.live/add-holdings-by-voice)
-- **📸 AI Screenshot Import** — screenshot your holdings on **any** exchange, broker or wallet (Binance, Coinbase, MetaMask, Robinhood, a broker statement — even a handwritten list) and Claude vision reads each asset, amount and price into your portfolio. No API key, no connection. → [import-portfolio-from-screenshot](https://walletlens.live/import-portfolio-from-screenshot)
-- **📄 Excel / CSV Import** — bulk-import your holdings or transaction history from a spreadsheet in seconds.
-- **🔗 On-chain Wallet Import** — paste any Ethereum, Bitcoin or Solana address and WalletLens auto-fetches live balances. No API key.
-- **⌨️ Manual Entry** — precise control when you want it, with exact dates and cost basis.
-- **📤 Export to Excel / CSV** — download your full portfolio (holdings, cost basis, P&L, allocation) for Excel or Google Sheets. → [export-portfolio-to-excel](https://walletlens.live/export-portfolio-to-excel)
-- **🧾 Crypto Tax Report Export** — export your complete transaction history as a CSV ready for Koinly, CoinTracker, TurboTax, or your accountant. → [crypto-portfolio-tax-report](https://walletlens.live/crypto-portfolio-tax-report)
+- **For absolute numbers**, accuracy governs — and the app shows a confidence interval
+  next to every estimate rather than a bare figure.
+- **For change over time**, only repeatability matters — and repeatability is five to seven
+  times better than accuracy for every method here.
 
-### 📊 Portfolio Dashboard
-- **All-asset net worth** — crypto, US stocks, gold/silver/platinum, fiat currencies, real estate and cash in one view
-- **Live P&L** — realized/unrealized gains, average cost basis, and portfolio health score
-- **Multi-wallet** — track multiple portfolios separately or combined
-- **Performance charts** — 4H · 1D · 7D · 30D with real historical snapshots
-- **Category breakdown** — allocation donut, per-category cards and sector heatmap
+That gap is what makes a phone useful for tracking a cut even though it cannot tell you
+your body fat to the point. Conflating the two is the standard mistake in this category:
+feeding accuracy into a trend filter makes a real 0.3 %/week cut statistically invisible
+for three months, even though the user can see it in the mirror.
 
-### 🤖 AI & Analysis
-- **Magic Indicator** — one composite signal per holding (Strong Buy → Distribute) merging 5 pillars: technical, on-chain, volume, whale flow, and fundamentals
-- **Technical Analysis** — RSI, MACD, Bollinger Bands, moving averages, ATR, support/resistance from daily candles
-- **AI Sell Plans** — auto-generated exit ladders based on real S/R levels and momentum
-- **Risk Scanner** — concentration risk, liquidity risk, and portfolio health insights
-- **AI Coach** — personalized portfolio advice powered by Claude AI
-- **Voice / typed import** — *"I bought 2 ETH at $3200 and 0.5 BTC"* — Claude parses multi-trade sentences in English or Arabic
+A single DEXA or BodPod result removes most of the systematic offset —
+`PersonalCalibration` fits a personal correction and collapses absolute error toward the
+reference method's own precision.
 
-### 🐋 Markets & Alerts
-- **Whale tracker** — live large on-chain BTC/ETH moves and exchange flows
-- **Price alerts** — PWA push notifications when targets are hit
-- **Smart alerts** — volatility and momentum-based notifications
-- **Live news** — crypto news feed with sentiment scoring
-- **Fear & Greed index** — real-time market sentiment
+## Architecture
 
-### 🎯 Goals & Planning
-- **Vision Goals** — bucket-based financial planning (Emergency Fund, Retirement, Down Payment…)
-- **Price Targets** — per-asset take-profit and stop-loss targets
-- **Goal completion tracking** — auto-detect when a bucket hits its target
-- **Weekly Report** — shareable portfolio summary card
+```
+core/    Pure Kotlin/JVM. No Android dependencies.
+         Body fat equations, personal calibration, Kalman trend filter,
+         repeatability scoring, programme generation, composition feedback,
+         and the body-scan geometry.
+         98 unit tests, runnable on any machine without an SDK or emulator.
 
----
-
-## Screenshots
-
-| Dashboard | AI Analysis | Goals |
-|:---:|:---:|:---:|
-| [![Dashboard](https://walletlens.live/og-image.png)](https://walletlens.live) | | |
-
-> 📸 **[See the live app →](https://walletlens.live)**
-
----
-
-## Quick Start
-
-```bash
-git clone https://github.com/tia8910/Walletlens.git
-cd Walletlens/client
-npm install
-npm run dev        # → http://localhost:5173
+app/     Android. Compose UI, encrypted Room storage, on-device vision, billing.
 ```
 
-Build for production:
+Keeping the maths in a plain JVM module is what makes it testable. Everything that decides
+a number a user might act on lives in `core/` and is covered by tests.
+
+### Data protection
+
+- **SQLCipher whole-file encryption.** The metadata is as revealing as the values — that
+  someone measured daily for six months says plenty without the numbers.
+- **Envelope-encrypted key.** A random passphrase, wrapped by a hardware-backed Android
+  Keystore AES-GCM key. Only the wrapped blob is stored.
+  (`androidx.security:security-crypto` is deprecated and deliberately not used.)
+- **`FLAG_SECURE` available as a one-tap setting** (Settings → Block screenshots): blocks
+  screenshots, screen recording and the recent-apps thumbnail. Off by default, because the
+  flag is all-or-nothing — leaving it on would stop users capturing their own progress and
+  make store listing screenshots impossible to produce. Screens rendering a captured body
+  photo should set it unconditionally regardless of the preference.
+- **No `INTERNET` permission.** The app cannot open a socket, so no photograph and no
+  measurement can leave the device even if a bug or a dependency tried to send one. This is
+  enforced by the OS rather than promised, and any user can verify it in the permission
+  list. Body scanning uses models packaged in the APK; Play Billing reaches the Play Store
+  over binder IPC, not this process's network stack.
+- **Biometric gate** on launch and on every return to the foreground.
+- **Backup and device transfer disabled.** Cloud backup would put the database on someone
+  else's server, which contradicts the guarantee. The user's route to a backup is the
+  app's own passphrase-encrypted export.
+
+### Monetisation
+
+- **Pro lifetime** — one-time purchase, unlocks programme generation.
+- **Training block** — consumable, one generated mesocycle.
+
+Blocks are sold as consumables rather than as a subscription because a mesocycle is the
+unit lifters already think in, and because a consumable is the simplest Play Billing
+product to settle with no server: no renewals, grace periods or account holds to reconcile.
+Entitlement resolves from the Play Store's local cache, so it works offline.
+
+Purchases are verified on-device against the Play Console key. This does not survive a
+patched APK — see `PurchaseVerifier` for why that exposure is accepted rather than fought.
+
+## Building
+
 ```bash
-npm run build      # Vite build + static prerender → client/dist
-npm test           # Vitest
+./gradlew :core:test          # measurement and programming logic, no SDK needed
+./gradlew :app:assembleDebug  # requires the Android SDK
 ```
 
----
+A fresh clone builds and runs without any credentials. An absent Play licensing key makes
+`PurchaseVerifier` defer to the Play Store's own response, which is the correct behaviour
+for a development build with no Play Console behind it.
 
-## Tech Stack
+### Local release builds
 
-| Layer | Technology |
+Create `keystore.properties` at the repository root (gitignored):
+
+```properties
+KEYSTORE_FILE=/absolute/path/to/release.jks
+KEYSTORE_PASSWORD=...
+KEY_ALIAS=...
+KEY_PASSWORD=...
+PLAY_PUBLIC_KEY=...
+```
+
+Without it, `:app:assembleRelease` still succeeds and produces an **unsigned** APK, which
+is useful for checking that R8 and resource shrinking behave.
+
+## Releasing
+
+`.github/workflows/release.yml` builds a signed AAB for Play and a signed APK for direct
+install. Push a version tag:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+That runs the `:core` tests, builds both artifacts, **verifies the signatures**
+(`apksigner` for the APK, `jarsigner` for the AAB — an unsigned artifact is otherwise a
+silent build success that only fails at Play upload), and opens a **draft** GitHub release
+with them attached.
+
+`workflow_dispatch` runs the same build as a dry run without publishing anything.
+
+### Required repository secrets
+
+| Secret | Notes |
 |---|---|
-| Frontend | React 18 · React Router 6 · Recharts · Vite |
-| Storage | localStorage / IndexedDB — **100% client-side, no backend** |
-| Hosting | GitHub Pages (custom domain `walletlens.live`) |
-| AI | Claude `claude-sonnet-4-6` via serverless Deno Deploy endpoint |
-| Service Worker | Custom tiered caching (offline-first for assets, SWR for prices) |
-| Tests | Vitest |
+| `KEYSTORE_BASE64` | `base64 -w0 release.jks` |
+| `KEYSTORE_PASSWORD` | |
+| `KEY_ALIAS` | |
+| `KEY_PASSWORD` | |
+| `PLAY_PUBLIC_KEY` | Play Console → Monetisation setup → licensing key |
 
-### Live data sources (all free, no API key required)
-**Crypto:** CoinGecko · Binance · CryptoCompare · CoinCap  
-**Stocks:** Stooq  
-**Metals:** gold-api.com  
-**FX/Fiat:** open.er-api · Frankfurter (ECB)
+`versionCode` comes from the workflow run number, which is monotonic — re-running a tag
+produces a higher code rather than one Play will reject as a duplicate. `versionName`
+comes from the tag.
 
-Each has cascading fallbacks — the app never shows a blank panel.
+`mapping.txt` is kept as a build artifact but deliberately **not** attached to the release:
+it belongs in Play Console for deobfuscating crash reports, not on a public page where it
+hands anyone a map of the obfuscated build.
 
----
+## Status
 
-## Project Structure
+Working: profile setup, manual measurement entry, automatic body scanning from the camera
+or uploaded photos, the composition dashboard with trend and confidence bands, and training
+block generation that adapts to the composition trend.
 
-```
-Walletlens/
-├── client/                    # React + Vite app (ships to production)
-│   └── src/
-│       ├── pages/             # Dashboard, Technicals, Whales, Vision, Coach…
-│       ├── components/        # TradeSheet, MagicAnalysisPanel, VoiceImport…
-│       ├── api.js             # Data layer: prices, portfolio, signals
-│       ├── technicals.js      # Pure TA math (RSI, MACD, Bollinger, S/R)
-│       ├── magicIndicator.js  # Five-pillar composite → direction + confidence
-│       └── magicAi.js         # Claude AI verdict per asset
-├── voice-api/                 # Deno Deploy serverless endpoint (voice + AI)
-├── scripts/                   # Static prerender for SEO
-└── .github/workflows/         # Deploy, price/news updaters, social posting
-```
+Not built yet: workout logging against a generated block, measurement history browsing, and
+encrypted export/import.
 
----
+## Licence
 
-## AI Endpoint (Optional)
-
-Voice import and the Magic AI Verdict use Claude. Since the app is fully static, the API key lives in a tiny [Deno Deploy](https://deno.com/deploy) function under [`voice-api/`](voice-api/). The app works fully without it — all TA indicators, P&L and portfolio tracking are 100% on-device.
-
----
-
-## Privacy
-
-WalletLens **never** collects, stores or transmits your holdings. Portfolio data never leaves your browser. The only outbound calls are to public market-data APIs for prices — and optionally the Claude endpoint for voice/AI features (it receives only the text you type, nothing about your identity or full portfolio).
-
----
-
-## Contributing
-
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-- 🐛 **Bug?** [Open an issue](https://github.com/tia8910/Walletlens/issues/new?template=bug_report.yml)
-- 💡 **Feature idea?** [Request it here](https://github.com/tia8910/Walletlens/issues/new?template=feature_request.yml)
-- ⭐ **Find it useful?** A star goes a long way!
-
----
-
-## Disclaimer
-
-WalletLens is a tracking and analysis tool — **not financial advice**. Indicators, sell plans and AI verdicts are informational only. Always do your own research.
-
----
-
-<div align="center">
-
-**[walletlens.live](https://walletlens.live) · [Telegram](https://t.me/walletlenss) · [Twitter/X](https://x.com/wallet_lens) · [YouTube](https://youtube.com/@walletlens)**
-
-Made with ❤️ — Free forever, open source, private by design.
-
-⭐ **Star this repo to help others discover WalletLens!** ⭐
-
-</div>
+GPL-3.0. The source is public so the privacy claims can be audited rather than trusted.
