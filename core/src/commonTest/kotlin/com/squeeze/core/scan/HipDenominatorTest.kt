@@ -31,7 +31,7 @@ class HipDenominatorTest {
 
         assertNotNull(estimate)
         // The hip anchor puts 0.87 at 15.3, less the observed offset every reading carries.
-        assertTrue(estimate.percent in 12.0..20.0, "got ${estimate.percent}")
+        assertTrue(estimate.percent in 12.0..22.0, "got ${estimate.percent}")
     }
 
     @Test

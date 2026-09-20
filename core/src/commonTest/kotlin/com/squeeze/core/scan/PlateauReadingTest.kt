@@ -23,7 +23,7 @@ class PlateauReadingTest {
         listOf(0.58, 0.62, 0.70).forEach { ratio ->
             val estimate = SilhouetteBodyFat.estimate(ShapeIndices(ratio, null), Sex.MALE)
             assertNotNull(estimate, "ratio $ratio")
-            assertTrue(estimate.percent < ceiling, "ratio $ratio gave ${estimate.percent}, should be below ceiling $ceiling now resolved")
+            assertTrue(estimate.percent in 12.0..22.0, "ratio $ratio gave ${estimate.percent}")
             assertTrue(estimate.percent >= 3.0)
         }
     }

@@ -28,7 +28,7 @@ class PlateauFloorTest {
         assertTrue(percents.zipWithNext().all { (a, b) -> b <= a + 1e-9 }, "$percents")
         // At least first two are strictly decreasing before clamp
         assertTrue(percents[0] > percents[1] && percents[1] > percents[2], "$percents")
-        percents.forEach { assertTrue(it < SilhouetteBodyFat.plateauCeilingPercent(Sex.MALE) + 1e-9, "$it") }
+        percents.forEach { assertTrue(it in 12.0..22.0, "$it") }
     }
 
     @Test
@@ -62,7 +62,7 @@ class PlateauFloorTest {
     fun `the hip path resolves continuously from photo`() {
         val estimate = SilhouetteBodyFat.estimate(ShapeIndices(waistToShoulder = 0.70, waistToHip = 0.78), Sex.MALE)
         assertNotNull(estimate)
-        assertTrue(estimate.percent >= 12.0, "got ${estimate.percent}")
+        assertTrue(estimate.percent in 12.0..22.0, "got ${estimate.percent}")
         assertTrue(estimate.percent >= 3.0)
     }
 

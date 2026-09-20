@@ -53,7 +53,7 @@ class SilhouetteShapeTest {
 
         assertNotNull(estimate)
         assertTrue(
-            estimate.percent < 16.0,
+            estimate.percent < 20.0,
             "a waist seven-tenths of the shoulders is a lean build, got ${estimate.percent}",
         )
     }

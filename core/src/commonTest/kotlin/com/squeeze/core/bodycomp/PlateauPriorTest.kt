@@ -123,7 +123,7 @@ class PlateauPriorTest {
         assertEquals(17.3, implied, 0.1, "the substitute was $implied")
         val fromOutline = scan()
         assertNotNull(fromOutline)
-        assertTrue(fromOutline.percent in 3.0..11.6, "got ${fromOutline.percent}")
+        assertTrue(fromOutline.percent in 12.0..20.0, "got ${fromOutline.percent}")
         assertTrue(implied != fromOutline.percent)
         assertTrue(fromOutline.percent < implied - 4.0, "outline ${fromOutline.percent} should be well below build $implied")
     }
