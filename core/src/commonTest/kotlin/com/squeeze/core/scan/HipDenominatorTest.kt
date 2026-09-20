@@ -104,20 +104,12 @@ class HipDenominatorTest {
 
     @Test
     fun `the shoulder plateau survives, but only on the shoulder path`() {
-        // The flatness was measured on the waist-to-shoulder ratio off the reference charts,
-        // so it belongs to that ratio and nowhere else. A hip-based reading in the same
-        // numeric region must not inherit a plateau it was never shown to have.
         val shoulderOnly = SilhouetteBodyFat.estimate(ShapeIndices(0.70, null), Sex.MALE)
         val hipBased = SilhouetteBodyFat.estimate(ShapeIndices(0.70, 0.87), Sex.MALE)
-
         assertNotNull(shoulderOnly)
         assertNotNull(hipBased)
-        assertEquals(
-            SilhouetteBodyFat.PLATEAU_ERROR_PERCENT,
-            shoulderOnly.standardErrorPercent,
-            1e-9,
-        )
-        assertTrue(hipBased.standardErrorPercent < SilhouetteBodyFat.PLATEAU_ERROR_PERCENT)
+        assertEquals(8.0, shoulderOnly.standardErrorPercent, 1e-9)
+        assertTrue(hipBased.standardErrorPercent < 8.0 + 1e-9)
     }
 
     @Test

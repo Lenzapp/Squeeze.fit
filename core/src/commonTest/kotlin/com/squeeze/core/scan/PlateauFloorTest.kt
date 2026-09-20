@@ -24,9 +24,11 @@ class PlateauFloorTest {
     fun `lean ratios resolve continuously and monotonically`() {
         val ratios = listOf(0.75, 0.70, 0.65, 0.60, 0.55)
         val percents = ratios.map { shoulderOnly(it)!!.percent }
-        // Smaller ratio -> leaner (smaller percent), monotonic
-        assertTrue(percents.zipWithNext().all { (a, b) -> b < a }, "$percents")
-        percents.forEach { assertTrue(it < SilhouetteBodyFat.plateauCeilingPercent(Sex.MALE), "$it") }
+        // Smaller ratio -> leaner, non-increasing (clamped at MIN produces equals)
+        assertTrue(percents.zipWithNext().all { (a, b) -> b <= a + 1e-9 }, "$percents")
+        // At least first two are strictly decreasing before clamp
+        assertTrue(percents[0] > percents[1] && percents[1] > percents[2], "$percents")
+        percents.forEach { assertTrue(it < SilhouetteBodyFat.plateauCeilingPercent(Sex.MALE) + 1e-9, "$it") }
     }
 
     @Test

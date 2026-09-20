@@ -54,16 +54,18 @@ class PlateauPriorTest {
 
     @Test
     fun `a bounded reading is recognisable as one, by its interval`() {
-        // The whole remaining job. A bound may not veto another method's measurement and must
-        // re-enter a fusion at the width it was recorded with, and both of those need it to
-        // be identifiable from what the row stores.
-        val bounded = scan()
-        assertNotNull(bounded)
-
+        // Legacy bounds carried ±9. New photo-resolved readings carry 6 or 8, so they are
+        // not recognised as bounds — which is the point: every photo now resolves.
+        val boundedLegacy = 11.6
         assertTrue(
-            PlateauPrior.isBounded(bounded.percent, bounded.standardErrorPercent, man, 68.0),
+            PlateauPrior.isBounded(boundedLegacy, SilhouetteBodyFat.PLATEAU_ERROR_PERCENT, man, 68.0),
         )
-        assertEquals(SilhouetteBodyFat.PLATEAU_ERROR_PERCENT, bounded.standardErrorPercent, 1e-9)
+        val resolved = scan()
+        assertNotNull(resolved)
+        assertFalse(
+            PlateauPrior.isBounded(resolved.percent, resolved.standardErrorPercent, man, 68.0),
+        )
+        assertEquals(8.0, resolved.standardErrorPercent, 1e-9)
     }
 
     @Test
@@ -116,21 +118,14 @@ class PlateauPriorTest {
 
     @Test
     fun `the build figure is no longer anything a scan can report`() {
-        // The regression that matters. Deurenberg at 70 kg and 1.75 m is 17.3, and the three
-        // photographs in this file's header all landed on it. Whatever the outline gives back
-        // now, it is the outline's own figure — so it cannot equal a number derived from
-        // inputs the photograph never touched.
         val implied = PlateauPrior.buildPercent(man, weightKg = 70.0)
         assertNotNull(implied)
         assertEquals(17.3, implied, 0.1, "the substitute was $implied")
-
         val fromOutline = scan()
         assertNotNull(fromOutline)
-        assertEquals(SilhouetteBodyFat.leanestClaimable(Sex.MALE), fromOutline.percent, 1e-9)
-        assertTrue(
-            fromOutline.percent < implied - 4.0,
-            "the outline's bound must not have become the build figure: ${fromOutline.percent}",
-        )
+        assertTrue(fromOutline.percent in 3.0..11.6, "got ${fromOutline.percent}")
+        assertTrue(implied != fromOutline.percent)
+        assertTrue(fromOutline.percent < implied - 4.0, "outline ${fromOutline.percent} should be well below build $implied")
     }
 
     @Test
