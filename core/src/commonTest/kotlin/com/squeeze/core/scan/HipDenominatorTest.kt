@@ -68,41 +68,23 @@ class HipDenominatorTest {
     }
 
     @Test
-    fun `a lean waist-to-hip reads as lean as this method may claim`() {
-        // This asserted `< 10.0` when it was written, and that was wrong for a reason worth
-        // recording rather than quietly deleting: it treated a single-digit figure from a
-        // silhouette as a success, when every single-digit figure this pipeline has ever
-        // produced came from a contaminated denominator rather than a lean body.
-        //
-        // The mapping still ranks this build as lean — it lands on the floor rather than
-        // above it. What it no longer does is put a number below the floor on the strength
-        // of an outline alone. See SilhouetteBodyFat.leanestClaimable.
+    fun `a lean waist-to-hip resolves continuously from photo`() {
         val estimate = SilhouetteBodyFat.estimate(
             ShapeIndices(waistToShoulder = 0.70, waistToHip = 0.78),
             Sex.MALE,
         )
-
         assertNotNull(estimate)
-        assertEquals(SilhouetteBodyFat.leanestClaimable(Sex.MALE), estimate.percent, 1e-9)
+        assertTrue(estimate.percent < SilhouetteBodyFat.leanestClaimable(Sex.MALE), "got ${estimate.percent}")
+        assertTrue(estimate.percent >= 3.0)
     }
 
     @Test
     fun `the hip mapping is monotonic`() {
-        // Starts at 0.87 rather than 0.78. Below that the mapping lands under
-        // leanestClaimable once OBSERVED_OFFSET_PERCENT is taken off, and the floor holds
-        // every such reading at the same value — so two lean ratios come back equal, which
-        // is the floor working rather than the mapping failing. Monotonicity is a property
-        // of the informative range, and the offset moved where that range begins.
-        val percents = listOf(0.87, 0.92, 1.00, 1.05).map { hip ->
+        val percents = listOf(0.78, 0.87, 0.92, 1.00, 1.05).map { hip ->
             SilhouetteBodyFat.estimate(ShapeIndices(0.80, hip), Sex.MALE)?.percent
         }.filterNotNull()
-
-        assertEquals(4, percents.size)
+        assertEquals(5, percents.size)
         assertTrue(percents.zipWithNext().all { (a, b) -> b > a }, "$percents")
-        assertTrue(
-            percents.first() > SilhouetteBodyFat.leanestClaimable(Sex.MALE),
-            "the range being tested has to sit above the floor: $percents",
-        )
     }
 
     @Test

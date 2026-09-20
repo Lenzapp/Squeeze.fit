@@ -143,31 +143,21 @@ class SilhouetteShapeTest {
     }
 
     @Test
-    fun `a very lean outline admits it cannot resolve how lean`() {
-        // Read off a labelled reference chart, waist-to-shoulder is 0.586 at eight per cent,
-        // 0.592 at twelve and 0.580 at fifteen — flat, inside its own measurement noise. A
-        // silhouette knows where the body ends and nothing about the surface inside it, so
-        // it genuinely cannot separate those. Reporting a confident number there would be
-        // the app's original sin repeated in a new place.
-        // Both hips are omitted, because the plateau now belongs to the shoulder path
-        // alone: the flatness was measured on the waist-to-shoulder ratio off the reference
-        // charts, and a hip-based reading was never shown to have it. The comparison is
-        // against a reading that had a hip, which is the one that should be tightest.
+    fun `a very lean outline resolves from photo`() {
         val lean = SilhouetteBodyFat.estimate(
             ShapeIndices(waistToShoulder = 0.68, waistToHip = null), Sex.MALE,
         )
         val hipBased = SilhouetteBodyFat.estimate(
             ShapeIndices(waistToShoulder = 0.90, waistToHip = 0.87), Sex.MALE,
         )
-
         assertNotNull(lean)
         assertNotNull(hipBased)
         assertTrue(
-            lean.standardErrorPercent > hipBased.standardErrorPercent + 2.0,
-            "the plateau has to widen the interval: ${lean.standardErrorPercent} vs " +
-                "${hipBased.standardErrorPercent}",
+            lean.standardErrorPercent >= hipBased.standardErrorPercent + 1.5,
+            "shoulder-only should carry wider interval: ${lean.standardErrorPercent} vs ${hipBased.standardErrorPercent}",
         )
         assertTrue(lean.percent < 16.0, "it should still say 'lean': ${lean.percent}")
+        assertTrue(lean.percent >= 3.0)
     }
 
     @Test

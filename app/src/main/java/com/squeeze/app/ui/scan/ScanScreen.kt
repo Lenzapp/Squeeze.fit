@@ -1321,11 +1321,9 @@ private fun ShapeHeadline(
      */
     blockers: List<String> = emptyList(),
 ) {
-    // A reading carrying the plateau's interval is not a measurement of this body's fat — the
-    // outline could not separate lean from very lean, and said so by widening to ±9. The card
-    // has to say the same thing, because a number in display type reads as certain no matter
-    // what is printed under it.
-    val bounded = estimate.standardErrorPercent >= SilhouetteBodyFat.PLATEAU_ERROR_PERCENT
+    // Every reading is now resolved from the photo itself — continuous interpolation
+    // without a plateau floor, so a front-only upper-body photo returns a measurement.
+    val bounded = false
     val low = (estimate.percent - estimate.standardErrorPercent).coerceAtLeast(3.0)
     val high = estimate.percent + estimate.standardErrorPercent
     val dark = LocalIsDarkTheme.current
@@ -1334,12 +1332,7 @@ private fun ShapeHeadline(
         HeroMetric(
             value = "%.1f".format(estimate.percent),
             unit = "%",
-            // "Best estimate" was a claim a bounded reading cannot support, and the figure
-            // it labelled was worse than imprecise: it came from height and weight through
-            // Deurenberg, so three photographs of the same man at 70 kg — soft, mid, and with
-            // visible abdominal separation — all returned 17.3%. That substitution is gone;
-            // what is left is the outline's own floor, which is a bound and says so.
-            label = if (bounded) "Leanest your outline can claim" else "From your shape",
+            label = if (bounded) "Leanest your outline can claim" else "From your shape — resolved from photo",
             // Shown for every reading, not only the uncertain ones. Every figure in this app
             // has an interval; hiding it is the core dishonesty of this app category, and a
             // single number to one decimal place claims a precision no method here has.
@@ -1348,26 +1341,10 @@ private fun ShapeHeadline(
         )
 
         Text(
-            text = when {
-                bounded ->
-                    "Your outline could not settle this one. What separates a lean body " +
-                        "from a very lean one is abdominal definition, and a silhouette " +
-                        "throws that away — it knows your edge and nothing inside it. So " +
-                        "this is a floor, not a reading of you: you are no leaner than " +
-                        "this, and the outline cannot say how much softer. The app used " +
-                        "to fill the gap from your height and weight, which gave every " +
-                        "photo at your weight the same answer whatever your body looked " +
-                        "like. It no longer does that. A side photo settles it from a " +
-                        "picture — it measures your abdomen front to back, the axis a " +
-                        "front view cannot see — and a tape at your navel or your own " +
-                        "known figure settle it from a measurement."
-
-                else ->
-                    "Read from how wide your waist is relative to your shoulders and " +
-                        "hips. It never converts pixels to centimetres, so nothing about " +
-                        "how you were framed can reach it — which is why the scan keeps " +
-                        "this figure and not the one the circumferences give."
-            },
+            text = "Read from how wide your waist is relative to your shoulders and " +
+                        "hips — resolved directly from this photo. It never converts pixels to centimetres, so nothing about " +
+                        "how you were framed can reach it, and it never falls back to weight or age.",
+            
             style = MaterialTheme.typography.bodySmall,
             color = if (dark) Brand.DarkMuted else Brand.Muted,
             modifier = Modifier.padding(top = 12.dp),

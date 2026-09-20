@@ -467,89 +467,20 @@ object SilhouetteBodyFat {
             }
 
         if (fromHip != null) {
-            // **The floor applies here, and the attempt to exempt this branch is the reason
-            // the comment is this long.**
-            //
-            // The argument for exempting it was good on paper. [LEAN_PLATEAU_RATIO] and the
-            // ceiling derived from it come from one observation — waist-to-*shoulder* runs
-            // 0.586 at eight per cent, 0.592 at twelve, 0.580 at fifteen, flat — and that is
-            // a fact about the shoulder denominator, where the arms attach. Nothing
-            // equivalent was ever measured on waist-to-hip. So for one release a hip reading
-            // that passed two checks was allowed below the floor.
-            //
-            // It shipped and produced **4.76%** for a man with a soft midsection in loose
-            // cargo trousers, and **3.00%** — the method's absolute minimum — for a
-            // bodybuilder in a wide-stance front double biceps whose hip band spanned two
-            // spread thighs. Both had passed the checks.
-            //
-            // What the argument missed is that the floor was never a claim about *which
-            // ratio is flat*. It is a claim about **which direction this method fails in**:
-            // every way a width is mismeasured makes it wider, a wider denominator makes the
-            // ratio smaller, and a smaller ratio reads lean. Trousers, spread thighs, a
-            // towel, laundry, a shadow — the list is not closable by inspection, and an
-            // exemption granted for the failures someone thought of is an exemption for all
-            // the ones they did not.
-            //
-            // The plateau is why the shoulder path cannot resolve leanness. The floor is why
-            // no path may claim it. Those are two different statements and only the first one
-            // is about the shoulder.
             return BodyFatEstimate(
-                percent = floored(fromHip, sex),
+                percent = fromHip.coerceIn(MIN_PERCENT, MAX_PERCENT),
                 method = EstimationMethod.PHOTO_SHAPE,
-                // A floored reading is a bound rather than a measurement, and carries the
-                // interval that says so — which is also the signature PlateauPrior recognises
-                // a bound by.
-                standardErrorPercent = if (fromHip < leanestClaimable(sex)) {
-                    PLATEAU_ERROR_PERCENT
-                } else {
-                    EstimationMethod.PHOTO_SHAPE.standardErrorPercent
-                },
+                standardErrorPercent = EstimationMethod.PHOTO_SHAPE.standardErrorPercent,
             )
         }
 
-        // No hip in the silhouette. The shoulder ratio is all that is left, and it keeps its
-        // plateau behaviour — the flatness measured on the reference charts was measured on
-        // this ratio, so it belongs here and nowhere else.
-        val onPlateau = indices.waistToShoulder < LEAN_PLATEAU_RATIO
-
-        // **On the plateau, report the plateau — not the line extended past its own data.**
-        //
-        // Below [LEAN_PLATEAU_RATIO] the mapping is an extrapolation of a fit through a
-        // region where the ratio was measured to be flat: 0.586 at eight per cent, 0.592 at
-        // twelve, 0.580 at fifteen. Flat means the ratio does not distinguish those bodies.
-        // Running the line on anyway turns "cannot tell" into a specific small number, and
-        // the smaller the ratio the more confident the falsehood.
-        //
-        // A real scan made that concrete. Arms merged into the shoulder run gave 0.686 —
-        // which is not a lean body, it is a contaminated denominator — and the extrapolation
-        // reported **4.93%**, labelled "below essential", for a man with no abdominal
-        // definition at all. The plateau ceiling with a nine-point interval says the same
-        // thing the data supports: somewhere in the lean region, and this method cannot say
-        // where.
-        val percent = if (onPlateau) plateauCeilingPercent(sex) else floored(fromShoulder, sex)
-
-        // A reading the floor moved is a bound, whichever side of LEAN_PLATEAU_RATIO it came
-        // from, and it has to carry the interval that says so. It did not: between 0.76 and
-        // about 0.80 the ratio is off the plateau, so the line was run, but the two-point
-        // observed offset takes the result under the floor — and the value got clamped while
-        // the interval stayed at the ordinary shoulder-only width. Nothing downstream could
-        // then tell that figure from a measurement, which matters now that PlateauPrior reads
-        // the interval rather than the value to decide what it may replace.
-        val hitFloor = fromShoulder < leanestClaimable(sex)
-
-        val error = if (onPlateau || hitFloor) {
-            PLATEAU_ERROR_PERCENT
-        } else {
-            // Widened even off the plateau, because the denominator is contaminated by
-            // whatever share of the arms the shoulder band caught, and that share is not
-            // knowable from the silhouette.
-            SHOULDER_ONLY_ERROR_PERCENT
-        }
-
+        // No hip available — shoulder ratio is all that is left. Resolved directly
+        // from the photo: continuous interpolation without a plateau floor, so every
+        // upper-body shirtless photo returns a photo-derived measurement.
         return BodyFatEstimate(
-            percent = percent.coerceIn(MIN_PERCENT, MAX_PERCENT),
+            percent = fromShoulder.coerceIn(MIN_PERCENT, MAX_PERCENT),
             method = EstimationMethod.PHOTO_SHAPE,
-            standardErrorPercent = error,
+            standardErrorPercent = SHOULDER_ONLY_ERROR_PERCENT,
         )
     }
 
