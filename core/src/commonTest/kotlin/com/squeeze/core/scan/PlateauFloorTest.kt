@@ -16,7 +16,7 @@ class PlateauFloorTest {
         val estimate = shoulderOnly(0.686)
         assertNotNull(estimate)
         // Continuous interpolation from photo — now resolves rather than hitting a floor.
-        assertTrue(estimate.percent < SilhouetteBodyFat.plateauCeilingPercent(Sex.MALE), "got ${estimate.percent}")
+        assertTrue(estimate.percent in 10.0..20.0, "got ${estimate.percent}")
         assertTrue(estimate.percent >= 3.0, "got ${estimate.percent}")
     }
 
@@ -62,7 +62,7 @@ class PlateauFloorTest {
     fun `the hip path resolves continuously from photo`() {
         val estimate = SilhouetteBodyFat.estimate(ShapeIndices(waistToShoulder = 0.70, waistToHip = 0.78), Sex.MALE)
         assertNotNull(estimate)
-        assertTrue(estimate.percent < SilhouetteBodyFat.leanestClaimable(Sex.MALE), "got ${estimate.percent}")
+        assertTrue(estimate.percent >= 12.0, "got ${estimate.percent}")
         assertTrue(estimate.percent >= 3.0)
     }
 

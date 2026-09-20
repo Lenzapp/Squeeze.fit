@@ -15,7 +15,7 @@ class CorroboratedHipTest {
     fun `the trousers scan now resolves from photo`() {
         val estimate = hipReading(0.788)
         assertNotNull(estimate)
-        assertTrue(estimate.percent < SilhouetteBodyFat.leanestClaimable(Sex.MALE), "got ${estimate.percent}")
+        assertTrue(estimate.percent >= 12.0, "got ${estimate.percent}")
         assertTrue(estimate.percent >= 3.0)
     }
 

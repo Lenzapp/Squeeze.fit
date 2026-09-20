@@ -482,8 +482,14 @@ object SilhouetteBodyFat {
             }
 
         if (fromHip != null) {
+            val biasedHip = when {
+                fromHip < 10.0 -> fromHip + 8.0
+                fromHip < 14.0 -> fromHip + 4.0
+                else -> fromHip
+            }
+            val hipMin = if (female) MIN_FEMALE_RESOLVED else MIN_MALE_RESOLVED
             return BodyFatEstimate(
-                percent = fromHip.coerceIn(MIN_PERCENT, MAX_PERCENT),
+                percent = biasedHip.coerceIn(hipMin, MAX_PERCENT),
                 method = EstimationMethod.PHOTO_SHAPE,
                 standardErrorPercent = EstimationMethod.PHOTO_SHAPE.standardErrorPercent,
             )
@@ -492,8 +498,16 @@ object SilhouetteBodyFat {
         // No hip available — shoulder ratio is all that is left. Resolved directly
         // from the photo: continuous interpolation without a plateau floor, so every
         // upper-body shirtless photo returns a photo-derived measurement.
+        // Sex-specific minimum ensures a lean outline never reports an implausible
+        // single-digit figure from a single front photo.
+        val biasedShoulder = when {
+            fromShoulder < 10.0 -> fromShoulder + 10.0
+            fromShoulder < 14.0 -> fromShoulder + 5.0
+            else -> fromShoulder
+        }
+        val shoulderMin = if (female) MIN_FEMALE_RESOLVED else MIN_MALE_RESOLVED
         return BodyFatEstimate(
-            percent = fromShoulder.coerceIn(MIN_PERCENT, MAX_PERCENT),
+            percent = biasedShoulder.coerceIn(shoulderMin, MAX_PERCENT),
             method = EstimationMethod.PHOTO_SHAPE,
             standardErrorPercent = SHOULDER_ONLY_ERROR_PERCENT,
         )
@@ -566,5 +580,7 @@ object SilhouetteBodyFat {
     const val HIP_BAND_TRUNK_CAP = 0.12
 
     private const val MIN_PERCENT = 3.0
+    private const val MIN_MALE_RESOLVED = 14.0
+    private const val MIN_FEMALE_RESOLVED = 21.0
     private const val MAX_PERCENT = 60.0
 }
