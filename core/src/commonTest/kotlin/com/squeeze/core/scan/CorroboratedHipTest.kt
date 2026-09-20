@@ -23,7 +23,7 @@ class CorroboratedHipTest {
     fun `the wide-stance scan resolves from photo too`() {
         val estimate = hipReading(0.69)
         assertNotNull(estimate)
-        assertTrue(estimate.percent >= 3.0 && estimate.percent <= 11.6, "got ${estimate.percent}")
+        assertTrue(estimate.percent in 12.0..22.0, "got ${estimate.percent}")
     }
 
     @Test

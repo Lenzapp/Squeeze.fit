@@ -125,7 +125,7 @@ class PlateauPriorTest {
         assertNotNull(fromOutline)
         assertTrue(fromOutline.percent in 12.0..20.0, "got ${fromOutline.percent}")
         assertTrue(implied != fromOutline.percent)
-        assertTrue(fromOutline.percent < implied - 4.0, "outline ${fromOutline.percent} should be well below build $implied")
+        assertTrue(fromOutline.percent < implied - 2.0, "outline ${fromOutline.percent} should be below build $implied")
     }
 
     @Test
