@@ -444,11 +444,15 @@ class ScanViewModel @Inject constructor(
         val pelvisSpan = front.geometry
             ?.let { kotlin.math.abs(it.hipLeft.x - it.hipRight.x) }
             ?.takeIf { it > 0.0 }
+        val shoulderSpan = front.geometry
+            ?.let { kotlin.math.abs(it.shoulderLeft.x - it.shoulderRight.x) }
+            ?.takeIf { it > 0.0 }
 
         val shapeIndices = SilhouetteBodyFat.indicesFrom(
             front.profile,
             front.anchors,
             pelvisSpan,
+            shoulderSpan,
             // False only at UPPER_BODY, where the pelvis is outside the picture and the
             // hip band would otherwise clamp onto the crop line. See the parameter's own
             // documentation — it is the one place this framing could go silently wrong

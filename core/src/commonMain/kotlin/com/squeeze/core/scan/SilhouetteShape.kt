@@ -159,6 +159,13 @@ object SilhouetteBodyFat {
          */
         pelvisSpan: Double? = null,
         /**
+         * Distance between the two shoulder landmarks, same unit as [pelvisSpan].
+         * Used to detect arm contamination in the shoulder silhouette width: when the
+         * mask at the shoulder band is much wider than the skeletal span, the band
+         * has caught an arm and the ratio would read artificially lean.
+         */
+        shoulderSpan: Double? = null,
+        /**
          * Whether the pelvis is inside the photograph at all.
          *
          * False at [ScanFraming.UPPER_BODY], and it has to be asked rather than discovered.
@@ -211,11 +218,19 @@ object SilhouetteBodyFat {
 
         // Shoulder width is taken from the silhouette a little below the joint line, where
         // the deltoid is widest, rather than at the landmark row itself.
-        val shoulder = AnatomicalLevelFinder
+        val shoulderSilhouette = AnatomicalLevelFinder
             .widestBetween(profile, bands.shoulder.fromRow, bands.shoulder.toRowInclusive)
             ?.let { profile.torsoWidthAt(it) }
             ?: return null
-        if (shoulder <= 0.0) return null
+        if (shoulderSilhouette <= 0.0) return null
+        // When the silhouette shoulder is much wider than the skeletal span, an arm
+        // was counted into the denominator and the ratio reads lean. Correct it to
+        // the landmark span scaled to deltoid width (~1.32× biacromial), so a
+        // shirtless front photo with arms slightly out still resolves from the photo.
+        val shoulder = if (shoulderSpan != null && shoulderSpan > 0.0) {
+            val factor = shoulderSilhouette / shoulderSpan
+            if (factor > 1.45) shoulderSpan * 1.32 else shoulderSilhouette
+        } else shoulderSilhouette
 
         // The hip, read narrowly and by median, and then checked against the skeleton.
         //
